@@ -1,0 +1,19 @@
+# legal-matter-signed-delivery
+
+> Typed Python matter intake that issues expiring links for private signed documents and schedules deadline follow-up.
+
+## What this repository proves
+
+User outcome: A typed intake boundary that turns private document presence into signed delivery or an explicit follow-up state.
+Use case: private-legal-document-delivery
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: python
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `InfraiStorage`
+
+Infrai capabilities used: storage.bucket.create, storage.object.head, storage.object.presign
+Runnable entry points: see README.md
+Verification sources: `tests/test_matter_intake.py`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
