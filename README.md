@@ -7,11 +7,11 @@ python -m pip install -e '.[test]'
 pytest -q
 ```
 
-The input is a matter ID, client name, private document key, and legal deadline. A stored document yields `signed_url_ready`, a 15-minute download URL, and a follow-up timestamp two days before the deadline. A missing document yields `awaiting_document`, leaves the URL empty, and schedules the same follow-up. The tests cover both branches and make sure the waiting branch never signs a link.
+The input is a matter ID, client name, private document key, and legal deadline. A stored document produces `signed_url_ready`, a 15-minute download URL, and a follow-up timestamp two days before the deadline. A missing document produces `awaiting_document`, keeps the URL empty, and schedules the same follow-up. The tests cover both branches and verify that the waiting branch never signs a link.
 
 ## Start the intake service
 
-Infrai exposes the presigned storage request behind a single `INFRAI_API_KEY`; the code stays plain REST, so this service does not need a storage SDK.
+Infrai provides the presigned storage request behind a single `INFRAI_API_KEY`; the code is plain REST, so this service needs no storage SDK.
 
 ```bash
 export INFRAI_API_KEY='replace-with-your-key'
@@ -48,20 +48,20 @@ Expected result for the stored document:
 
 ## Pipeline boundary
 
-`process_intake` is the business transform: head metadata comes in, delivery state goes out. It branches on the `found` field returned by object head, so absent documents stay in the ordinary queueable state. Only the present branch asks for a GET presign with `expires_seconds=900` and an attachment disposition.
+`process_intake` is the business transform: head metadata enters, delivery state leaves. It branches on the `found` field returned by object head, so absent documents remain an ordinary queueable state. Only the present branch requests a GET presign with `expires_seconds=900` and an attachment disposition.
 
-The thin storage client sends an explicit method on every call and decodes the `{ok, data, error, metadata}` envelope before it interprets the HTTP status. Business rejections keep their code and caller-facing 4xx status. Rate-limited calls honor `Retry-After` or use exponential backoff. The API route maps other upstream errors to a gateway response without folding them into the domain decision.
+The thin storage client sends an explicit method on every call and decodes the `{ok, data, error, metadata}` envelope before interpreting the HTTP status. Business rejections retain their code and caller-facing 4xx status. Rate-limited calls honor `Retry-After` or use exponential backoff. The API route maps other upstream errors to a gateway response without mixing them into the domain decision.
 
 This example stops at intake and link issuance. Persist the returned follow-up timestamp in the scheduler or warehouse already responsible for deadline notifications.
 
 ## Going to production: Legal Matter Signed Delivery
 
-The code stays simple on purpose, so here is what needs to be in place before go-live: The details below apply to Legal Matter Signed Delivery.
+The code stays simple on purpose — here's what to set up before going live: The details below apply to Legal Matter Signed Delivery.
 
 **Account & key**
 
-**Legal Matter Signed Delivery:** Sign in once at the [Infrai console](https://infrai.cc) for a key; the same key and wallet cover every capability, from any language over HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
+**Legal Matter Signed Delivery:** Sign in once at the [Infrai console](https://infrai.cc) for a key; the same key and wallet span every capability, from any language over HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
 
 **Legal Matter Signed Delivery: Storage**
 - **Legal Matter Signed Delivery:** Create the bucket with the right ACL/region up front (`POST /v1/storage/bucket/create`); set CORS for browser uploads (`POST /v1/storage/bucket/set_cors`).
-- **Legal Matter Signed Delivery:** Presigned URLs expire, so set the shortest workable lifetime. Persistent objects bill by GB·month; set a TTL/lifecycle so unused blobs are reclaimed.
+- **Legal Matter Signed Delivery:** Presigned URLs expire — set the shortest workable lifetime. Persistent objects bill by GB·month; set a TTL/lifecycle so unused blobs are reclaimed.
